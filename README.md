@@ -1,74 +1,126 @@
-# Sentiment Analysis on Tweets
+# Advanced Operating Systems - Assignment 2 
 
-**Update**(21 Sept. 2018): I don't actively maintain this repository. This work was done for a course project and the dataset cannot be released because I don't own the copyright. However, everything in this repository can be easily modified to work with other datasets. I recommend reading the [sloppily written project report](https://github.com/abdulfatir/twitter-sentiment-analysis/tree/master/docs/report.pdf) for this project which can be found in `docs/`.
+##### We are given to implement a shell that supports a semi-colon separated list of commands. We need to use 'strtok' to tokenize the command. Also, support '&' operator which lets a program run in the background after printing the process id of the newly created process. 
 
-## Dataset Information
 
-We use and compare various different methods for sentiment analysis on tweets (a binary classification problem). The training dataset is expected to be a csv file of type `tweet_id,sentiment,tweet` where the `tweet_id` is a unique integer identifying the tweet, `sentiment` is either `1` (positive) or `0` (negative), and `tweet` is the tweet enclosed in `""`. Similarly, the test dataset is a csv file of type `tweet_id,tweet`. Please note that csv headers are not expected and should be removed from the training and test datasets.  
+## How to Run?
+1. A makefile along with all the source files have been included in the assignment submission
+1. Run `make` command to compile and link the shell files
+2. Run `./main` to execute the main shell program
 
-## Requirements
+## Features of the shell
 
-There are some general library requirements for the project and some which are specific to individual methods. The general requirements are as follows.  
-* `numpy`
-* `scikit-learn`
-* `scipy`
-* `nltk`
+1. Many commands are inbuilt which are explained in the following section. All the other commands which are to be executed in foreground and/or background are implemented using `execvp`. So, all the commands available in Bash can be executed as well in this shell.
 
-The library requirements specific to some methods are:
-* `keras` with `TensorFlow` backend for Logistic Regression, MLP, RNN (LSTM), and CNN.
-* `xgboost` for XGBoost.
+2. The prompt for taking the next command displays the `username`, `hostname` and the `present working directory`. The directory in which the shell is run is taken to be the home directory `~` of the shell. The present working directory is displayed either in terms of `/` (if present working directory is the root of this shell) or as absolute path.
 
-**Note**: It is recommended to use Anaconda distribution of Python.
+3. This shell implements the usual commands of the linux shell like `cd`, `echo` and `pwd`. Variations of these commands are also supported by this shell. 
 
-## Usage
+4. `ls` command has also been implemented along with its two flags namely `-a` and `-l`, along with '.', '..', '~', and directory paths as arguments.
 
-### Preprocessing 
+5. This shell also supports creating foregroud and background processes with the use of `&` symbol.
 
-1. Run `preprocess.py <raw-csv-path>` on both train and test data. This will generate a preprocessed version of the dataset.
-2. Run `stats.py <preprocessed-csv-path>` where `<preprocessed-csv-path>` is the path of csv generated from `preprocess.py`. This gives general statistical information about the dataset and will two pickle files which are the frequency distribution of unigrams and bigrams in the training dataset. 
+6. `pinfo` is included as a command to display some specific information about the current self process or any other process when supplied with that process' PID.
 
-After the above steps, you should have four files in total: `<preprocessed-train-csv>`, `<preprocessed-test-csv>`, `<freqdist>`, and `<freqdist-bi>` which are preprocessed train dataset, preprocessed test dataset, frequency distribution of unigrams and frequency distribution of bigrams respectively.
+7. `search` command searches for the presence of specific files recursively starting from the current working directory.
 
-For all the methods that follow, change the values of `TRAIN_PROCESSED_FILE`, `TEST_PROCESSED_FILE`, `FREQ_DIST_FILE`, and `BI_FREQ_DIST_FILE` to your own paths in the respective files. Wherever applicable, values of `USE_BIGRAMS` and `FEAT_TYPE` can be changed to obtain results using different types of features as described in report.
+8. This shell also supports IO redirection using symbols `<`, `>` and `>>`.
 
-### Baseline
-3. Run `baseline.py`. With `TRAIN = True` it will show the accuracy results on training dataset.
+9. This shell also supports pipelining as in the original bash shell. Multiple commands can be chained together using the pipe `|` symbol to pipe the output of one command to the input of another.
 
-### Naive Bayes
-4. Run `naivebayes.py`. With `TRAIN = True` it will show the accuracy results on 10% validation dataset.
+10. Support for simple signals like <kbd>CTRL</kbd> + <kbd>Z</kbd> (SIGTSTP), <kbd>CTRL</kbd> + <kbd>C</kbd>(SIGINT) and <kbd>CTRL</kbd> + <kbd>D</kbd>(EOT) have been included with their appropriate behaviour
 
-### Maximum Entropy
-5. Run `logistic.py` to run logistic regression model OR run `maxent-nltk.py <>` to run MaxEnt model of NLTK. With `TRAIN = True` it will show the accuracy results on 10% validation dataset.
+11. Autocomplete functionality for commands as well as files have been included to help the user with autocomplete functionality. Appropriate error messages are displayed when autocomplete does not find matching commands, files or directories.
 
-### Decision Tree
-6. Run `decisiontree.py`. With `TRAIN = True` it will show the accuracy results on 10% validation dataset.
+12. `history <num>` command implements the history feature which prints 'num' number of previous commands entered by the user. Maximum storage capacity of history is 20 and maximum commands output is 10 (by default)
 
-### Random Forest
-7. Run `randomforest.py`. With `TRAIN = True` it will show the accuracy results on 10% validation dataset.
+## Inbuilt Commands
 
-### XGBoost
-8. Run `xgboost.py`. With `TRAIN = True` it will show the accuracy results on 10% validation dataset.
+1. `echo`
+    * Implemented in `echo.cpp`
+    * Takes a string argument and prints it after removing the extra spaces.
 
-### SVM
-9. Run `svm.py`. With `TRAIN = True` it will show the accuracy results on 10% validation dataset.
+2. `pwd`
+    * Implemented in `pwd.cpp`
+    * Prints the path of current working directory.
+    * Uses the `getcwd()` system call.
 
-### Multi-Layer Perceptron
-10. Run `neuralnet.py`. Will validate using 10% data and save the best model to `best_mlp_model.h5`.
+3. `cd [location]`
+    * Implemented in `cd.cpp`
+    * Changes the current working directory to the mentioned directory. If no parameter is given, it changes the directory to the root directory of the shell.
+    * If `~` is present in the given `location`, it is replaced with the home directory of the shell.
+    * If `location` is `-`, it is interpreted as the previous working directory of the shell.
+    * Implemented using `chdir()` system call.
 
-### Reccurent Neural Networks
-11. Run `lstm.py`. Will validate using 10% data and save models for each epock in `./models/`. (Please make sure this directory exists before running `lstm.py`).
+4. `ls [-l -a -al -la] [Directory]`
+    * Implemented in `ls.cpp`
+    * Lists all the files and directories in the mentioned directory/directories. If no parameters are passed, lists the contents of current directory.
+    * `-l` flag lists the long format of `ls`, providing additional details such as permissions, owner, time of creation etc.
+    * `-a` flag includes the hidden files/diectories in the listing.
+    * The flags and directories can be provided in any order.
+    * Uses the `readdir()` system call.
 
-### Convolutional Neural Networks
-12. Run `cnn.py`. This will run the 4-Conv-NN (4 conv layers neural network) model as described in the report. To run other versions of CNN, just comment or remove the lines where Conv layers are added. Will validate using 10% data and save models for each epoch in `./models/`. (Please make sure this directory exists before running `cnn.py`). 
+5. `pinfo [process_id]`
+    * Implemented in `pinfo.cpp`
+    * Gives the information about `process_id` process. If `process_id` not mentioned, gives information about the current process.
+    * The information includes Process ID, Process Name, State of the process and the exceutable path of the process.
+    * Uses the files `/proc/process_id/status` and `/proc/process_id/exec` to fetch the required information. 
 
-### Majority Vote Ensemble
-13. To extract penultimate layer features for the training dataset, run `extract-cnn-feats.py <saved-model>`. This will generate 3 files, `train-feats.npy`, `train-labels.txt` and `test-feats.npy`.
-14. Run `cnn-feats-svm.py` which uses files from the previous step to perform SVM classification on features extracted from CNN model.
-15. Place all prediction CSV files for which you want to take majority vote in `./results/` and run `majority-voting.py`. This will generate `majority-voting.csv`.
+6. `history [num]`
+    * Implemented in `history.cpp`
+    * Gives the `num` number of previous commands run. If `num` is not mentioned, 10 is taken as the default value for `num`.
+    * Continous repetitions, invalid commands and blank lines are avoided in the history.
 
-## Information about other files
+12. `fg`
+    * Implemented in `main.cpp`
+    * Makes a foreground process and blocks the shell until the process exits or is forced to exit
 
-* `dataset/positive-words.txt`: List of positive words.
-* `dataset/negative-words.txt`: List of negative words.
-* `dataset/glove-seeds.txt`: GloVe words vectors from StanfordNLP which match our dataset for seeding word embeddings.
-* `Plots.ipynb`: IPython notebook used to generate plots present in report.
+13. `bg_process &`
+    * Implemented in `background.cpp`
+    * Creates a background process and resumes the terminal for command processing
+    * 
+15. `exit`
+    * Implemented in `main.cpp`
+    * Logs out of the terminal.
+    * Use this command to ensure proper closing (killing all persisting background processes).
+
+## Executional Details     
+
+1. Any command ending with `&` is treated as a background process the shell does not wait for its execution. If such a process requests terminal control, it will automatically suspended in the background. The shell keeps track of all background processes and alerts the user on their completion.
+
+2. <kbd>|</kbd> is used for piping of commands, i.e, Output of one command serves as input for the next.
+Example:
+    ```
+    username@hostname $ cat todo.txt | head -7 | tail -5
+    ```
+
+3. <kbd><</kbd> is used for input redirection. <kbd>></kbd> (for overwriting) and <kbd>>></kbd> (for apending) are used for output redirection.<br>
+Example:
+    ```
+    # Input Redirection
+    username@hostname $ cat < todo.txt 
+
+    # Output Redirection
+    username@hostname $ ls -l > list_dir.txt
+
+    # Input and Output Redirection
+    username@hostname $ cat < lines.txt > lines_copy.txt
+    ```
+
+5. <kbd>Ctrl</kbd> + <kbd>C</kbd> sends the `SIGINT` signal and terminates any foreground process.
+
+6. <kbd>Ctrl</kbd> + <kbd>Z</kbd> sends the `SIGSTP` signal and suspends any running foreground process.
+
+7. <kbd>Ctrl</kbd> + <kbd>D</kbd> is an `EOF` character and terminates the shell.
+
+
+### To Do
+1. UP arrow key for command-recall
+2. Handle edge case of echo command
+3. pinfo - add + for foreground
+4. fix encoding for GUI apps when started with execv()
+5. Implement redirection with pipes
+
+
+
+
